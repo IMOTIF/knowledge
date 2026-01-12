@@ -3,6 +3,6 @@ import {Redirect} from 'react-router-dom';
 
 export default function Home(): ReactNode {
   return (
-    <Redirect to="/knowledge/v2/docs/" />
+    <Redirect to="/docs/" />
   );
 }
