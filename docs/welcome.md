@@ -49,4 +49,4 @@ to learn how to install and configure your local Odoo development environment.
 
 > **Note:**  
 > This documentation is continuously updated to reflect new standards, workflows, and tools used by the IMOTIF development team.  
-> If you find any issues or have suggestions, please open an issue in the [imotif-knowledge repository](https://github.com/0x-tao/imotif-knowledge).
+> If you find any issues or have suggestions, please open an issue in the [imotif-knowledge repository](https://github.com/IMOTIF/knowledge).
