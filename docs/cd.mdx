@@ -1,0 +1,116 @@
+---
+title: Github Action CD & Docker Deployment
+description: Learn CD & Docker Deployment through hands-on practice.
+sidebar_position: 5
+
+---
+
+## ก่อนจะเริ่มทำ CD เราจะกลับมาทำ flow CI ให้จบก่อนครับ
+
+clone repo ใช้สำหรับดึง repository ที่มีอยู่แล้วมาจาก remote
+
+
+```bash
+git clone https://github.com/tao-thewarat/web-CD101.git
+```
+
+---
+
+
+```text
+.
+└── .github
+    └── workflows
+        └── build.yaml
+```
+
+`build.yaml`
+
+```yaml
+name: build
+
+on:
+  push:
+    branches:
+      - "**"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Build
+        run: yarn build
+```
+
+## Continuous Deployment (CD)
+
+CD คือขั้นตอนนำโค้ดที่ผ่านการตรวจสอบแล้วไป deploy
+อาจเป็นการ deploy แบบกดเอง หรือแบบอัตโนมัติ
+
+ในการอบรมนี้จะใช้ **Docker** และ **Watchtower**
+เพื่อแสดงให้เห็นแนวคิดของการ deploy ที่ลดขั้นตอน manual และลดความผิดพลาดจากมนุษย์
+
+```text
+.
+└── .github
+    └── workflows
+        └── build.yaml
+        └── deploy.yaml
+```
+
+`deploy.yaml`
+
+
+```yaml
+name: Build & Deploy Docker
+
+on:
+    pull_request:
+        types: [closed]
+        branches:
+            - main
+
+jobs:
+    deploy:
+        if: github.event.pull_request.merged == true
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Login to Docker Hub
+              uses: docker/login-action@v3
+              with:
+                  username: ${{ secrets.DOCKERHUB_USERNAME }}
+                  password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+            - name: Build and push Docker image
+              uses: docker/build-push-action@v5
+              with:
+                  context: .
+                  push: true
+                  tags: |
+                      ${{ secrets.DOCKERHUB_USERNAME }}/web-cd101:latest
+                      ${{ secrets.DOCKERHUB_USERNAME }}/web-cd101:${{ github.sha }}
+
+            - name: Deploy via SSH
+              uses: appleboy/ssh-action@v1.0.3
+              with:
+                  host: ${{ secrets.SSH_HOST }}
+                  username: ${{ secrets.SSH_USER }}
+                  key: ${{ secrets.SSH_PRIVATE_KEY }}
+                  script: |
+                      echo 'Deploying to server...'
+```
